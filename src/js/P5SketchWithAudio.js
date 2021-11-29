@@ -62,34 +62,59 @@ const P5SketchWithAudio = () => {
 
         p.setup = () => {
             p.canvas = p.createCanvas(p.canvasWidth, p.canvasHeight);
-            p.background(255);
+            p.stroke(255);
+            p.strokeWeight(2);
+            p.noLoop();
+            p.frameRate(30);
             p.maxSpiralSize = p.width >= p.height ? p.height / 2 : p.width /2;
-            p.spiralWidth = p.random(1, 39);
             document.getElementById("loader").classList.add("loading--complete");
         }
 
         p.draw = () => {
-            let oldX = p.width/2;
-            let oldY = p.height/2;
-            const size = p.maxSpiralSize;
-            const angle = 0;
+            p.background(0);
+            p.drawSpiral2();
+            p.drawSpiral3();
+            p.drawSpiral4();
             
-            for (let i=0; i<size; i++) {
-                let newAngle = (angle/10) * i;
-                let x = (p.width/2) + (p.spiralWidth * newAngle) * Math.sin(newAngle);
-                let  y = (p.height/2) + (p.spiralWidth * newAngle) * Math.cos(newAngle);
-                console.log(x);
-                console.log(y);
-                
-                // Random Color for each line segment
-                // strokeWeight(randomWeight()); // Random Weight (1-5)
-                
-                p.line(oldX, oldY, x, y);
-                oldX = x;
-                oldY = y;
-            }
             if(p.audioLoaded && p.song.isPlaying()){
 
+            }
+        }
+
+        p.drawSpiral2 = () => {
+            p.drawSpiral(p.width/4 * 3, p.height/4 * 3, 1, 2, 2);
+        }
+
+        p.drawSpiral3 = () => {
+            p.drawSpiral(p.width/4, p.height/4 * 3, 5);
+        }
+
+        p.drawSpiral4 = () => {
+            p.drawSpiral(p.width/2, p.height/4, 100, 5, 10, 8, 24);
+        }
+
+        p.drawSpiral = (startX, startY, delayAmount = 10, minWidth = 1, maxWidth = 20, minAngle = 1, maxAngle = 1) => {
+            const sizeMultiplier  = p.random(0.1, 5),
+                spiralWidth = p.random(minWidth, maxWidth),
+                angle = p.random(minAngle, maxAngle),
+                size = p.maxSpiralSize * (sizeMultiplier / spiralWidth / angle);
+            let oldX = startX,
+                oldY = startY;
+
+            for (let i=0; i<size; i++) {
+                setTimeout(
+                    function () {
+                        let newAngle = (angle/10) * i;
+                        let x = (startX) + (spiralWidth * newAngle) * Math.sin(newAngle);
+                        let  y = (startY) + (spiralWidth * newAngle) * Math.cos(newAngle);
+                        p.stroke(p.randomColor()); // Random Color for each line segment
+                        p.strokeWeight(p.randomWeight()); // Random Weight (1-5)
+                        p.line(oldX, oldY, x, y);
+                        oldX = x;
+                        oldY = y;
+                    },
+                    (delayAmount * i)
+                );
             }
         }
 
@@ -124,6 +149,7 @@ const P5SketchWithAudio = () => {
                     p.song.play();
                 }
             }
+            p.draw();
         }
 
         p.creditsLogged = false;
