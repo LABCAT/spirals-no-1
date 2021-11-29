@@ -5,8 +5,8 @@ import * as p5 from "p5";
 import { Midi } from '@tonejs/midi'
 import PlayIcon from './functions/PlayIcon.js';
 
-// import audio from "../audio/circles-no-3.ogg";
-// import midi from "../audio/circles-no-3.mid";
+import audio from "../audio/spirals-no-1.ogg";
+import midi from "../audio/spirals-no-1.mid";
 
 const P5SketchWithAudio = () => {
     const sketchRef = useRef();
@@ -28,21 +28,26 @@ const P5SketchWithAudio = () => {
         p.maxSpiralSize = 0;
 
         p.loadMidi = () => {
-            // Midi.fromUrl(midi).then(
-            //     function(result) {
-            //         const noteSet1 = result.tracks[5].notes; // Synth 1
-            //         p.scheduleCueSet(noteSet1, 'executeCueSet1');
-            //         p.audioLoaded = true;
-            //         document.getElementById("loader").classList.add("loading--complete");
-            //         document.getElementById("play-icon").classList.remove("fade-out");
-            //     }
-            // );
+            Midi.fromUrl(midi).then(
+                function(result) {
+                    console.log(result);
+                    const noteSet1 = result.tracks[3].notes; // Synth 2 - Init Patch
+                    const noteSet2 = result.tracks[4].notes; // Synth 3 - Bass Guitar
+                    const noteSet3 = result.tracks[2].notes; // Synth 4 - Solina Strings
+                    p.scheduleCueSet(noteSet1, 'executeCueSet1');
+                    p.scheduleCueSet(noteSet2, 'executeCueSet2');
+                    p.scheduleCueSet(noteSet3, 'executeCueSet3');
+                    p.audioLoaded = true;
+                    document.getElementById("loader").classList.add("loading--complete");
+                    document.getElementById("play-icon").classList.remove("fade-out");
+                }
+            );
             
         }
 
         p.preload = () => {
-            // p.song = p.loadSound(audio, p.loadMidi);
-            // p.song.onended(p.logCredits);
+            p.song = p.loadSound(audio, p.loadMidi);
+            p.song.onended(p.logCredits);
         }
 
         p.scheduleCueSet = (noteSet, callbackName, poly = false)  => {
@@ -62,53 +67,59 @@ const P5SketchWithAudio = () => {
 
         p.setup = () => {
             p.canvas = p.createCanvas(p.canvasWidth, p.canvasHeight);
+            p.colorMode(p.HSB, 360, 100, 100);
             p.stroke(255);
             p.strokeWeight(2);
+            p.background(0);
             p.noLoop();
-            p.frameRate(30);
             p.maxSpiralSize = p.width >= p.height ? p.height / 2 : p.width /2;
-            document.getElementById("loader").classList.add("loading--complete");
         }
 
         p.draw = () => {
-            p.background(0);
-            p.drawSpiral2();
-            p.drawSpiral3();
-            p.drawSpiral4();
-            
             if(p.audioLoaded && p.song.isPlaying()){
 
             }
         }
 
-        p.drawSpiral2 = () => {
-            p.drawSpiral(p.width/4 * 3, p.height/4 * 3, 1, 2, 2);
+        p.executeCueSet1 = (note) => {
+            p.background(0);
+            const sizeMultiplier  = p.random(0.1, 5);
+            p.drawSpiral(p.width/8 * 7, p.height/4 * 3, sizeMultiplier, 1, 1);
         }
 
-        p.drawSpiral3 = () => {
-            p.drawSpiral(p.width/4, p.height/4 * 3, 5);
+        p.executeCueSet2 = (note) => {
+            const sizeMultiplier  = 8,
+                spiralWidth = p.random(1, 20);
+            p.drawSpiral(p.width/4, p.height/2, sizeMultiplier, spiralWidth, 1);
         }
 
-        p.drawSpiral4 = () => {
-            p.drawSpiral(p.width/2, p.height/4, 100, 5, 10, 8, 24);
+        p.executeCueSet3 = (note) => {
+            const sizeMultiplier  = p.random(4, 8),
+                spiralWidth = p.random(5, 10),
+                angle = p.random(8, 23);
+            p.drawSpiral(p.width/8 * 5, p.height/4, sizeMultiplier, spiralWidth, angle, 50);
         }
 
-        p.drawSpiral = (startX, startY, delayAmount = 10, minWidth = 1, maxWidth = 20, minAngle = 1, maxAngle = 1) => {
-            const sizeMultiplier  = p.random(0.1, 5),
-                spiralWidth = p.random(minWidth, maxWidth),
-                angle = p.random(minAngle, maxAngle),
-                size = p.maxSpiralSize * (sizeMultiplier / spiralWidth / angle);
+        p.drawSpiral = (startX, startY, sizeMultiplier = 1, spiralWidth = 20, angle = 1, delayAmount = 10) => {
+            const size = p.maxSpiralSize * (sizeMultiplier / spiralWidth / angle),
+                randomHue = p.random(0, 360);
+
             let oldX = startX,
-                oldY = startY;
+                oldY = startY;   
+            
+            if(delayAmount < 0) {
+                delayAmount = 1000 / size;
+            }
 
-            for (let i=0; i<size; i++) {
+            for (let i = 0; i < size; i++) {
                 setTimeout(
                     function () {
                         let newAngle = (angle/10) * i;
                         let x = (startX) + (spiralWidth * newAngle) * Math.sin(newAngle);
                         let  y = (startY) + (spiralWidth * newAngle) * Math.cos(newAngle);
-                        p.stroke(p.randomColor()); // Random Color for each line segment
-                        p.strokeWeight(p.randomWeight()); // Random Weight (1-5)
+                        // p.stroke(p.randomColor()); // Random Color for each line segment
+                        // p.strokeWeight(p.randomWeight()); // Random Weight (1-5)
+                        p.stroke(randomHue, 100 / size * i, 100); 
                         p.line(oldX, oldY, x, y);
                         oldX = x;
                         oldY = y;
@@ -116,13 +127,6 @@ const P5SketchWithAudio = () => {
                     (delayAmount * i)
                 );
             }
-        }
-
-        p.executeCueSet1 = (note) => {
-            p.background(p.random(255), p.random(255), p.random(255));
-            p.fill(p.random(255), p.random(255), p.random(255));
-            p.noStroke();
-            p.ellipse(p.width / 2, p.height / 2, p.width / 4, p.width / 4);
         }
 
         p.randomColor = () => {
